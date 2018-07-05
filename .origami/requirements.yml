@@ -69,3 +69,7 @@
   version: 4.2.1
 - src: geerlingguy.varnish
   version: 2.3.0
+- src: carlosbuenosvinos.ansistrano-deploy
+  version: 2.9.1
+- src: carlosbuenosvinos.ansistrano-rollback
+  version: 2.0.1

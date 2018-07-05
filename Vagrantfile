@@ -24,7 +24,6 @@ vconfig = load_config([
 Vagrant.require_version ">= #{vconfig['vagrant_version_min']}"
 ensure_plugins(vconfig['vagrant_plugins'])
 
-
 Vagrant.configure("2") do |config|
 
     # SSH options.
@@ -35,8 +34,8 @@ Vagrant.configure("2") do |config|
     config.vbguest.auto_update = false
 
     # HostManager
-    config.hostmanager.enabled = true
-    config.hostmanager.manage_host = true
+    config.hostmanager.enabled = false
+    config.hostmanager.manage_host = false
     config.hostmanager.manage_guest = true
     config.hostmanager.ignore_private_ip = false
     config.hostmanager.include_offline = true
@@ -51,7 +50,6 @@ Vagrant.configure("2") do |config|
             Machine.provision(node, settings, vconfig)
 
             node.hostmanager.aliases = get_vhost_aliases(settings, vconfig)
-
         end
     end
 

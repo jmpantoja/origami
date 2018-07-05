@@ -173,13 +173,12 @@ class Machine
         extra_vars = get_extra_vars(vconfig, settings)
 
         config.vm.provision "ansible" do |ansible|
+            ansible.playbook = "#{vconfig['origami_dir']}/#{vconfig['playbook']}.yml"
 
-            ansible.playbook = "#{vconfig['origami_dir']}/playbook.yml"
 
             ansible.galaxy_role_file = "#{vconfig['origami_dir']}/requirements.yml"
             ansible.galaxy_roles_path = "#{vconfig['origami_dir']}/roles"
             ansible.galaxy_command = 'ansible-galaxy install --role-file=%{role_file} --roles-path=%{roles_path}'
-
 
             ansible.extra_vars = extra_vars
             ansible.groups = ansible_groups
@@ -190,37 +189,4 @@ class Machine
         end
     end
 
-    def Machine.tryUpdateHosts(config, vconfig, settings)
-
-        frontend_host = vconfig['frontend_host'] ||= 'proxy'
-
-        settings['groups'] = settings['groups'] ||= []
-        if(settings['groups'].include? frontend_host)
-            Machine.updateHosts(config, vconfig, false)
-        end
-
-    end
-
-    def Machine.updateHosts(config, vconfig)
-        aliases = get_vhost_aliases(vconfig)
-
-        config.hostmanager.ip_resolver = proc do |vm, resolving_vm|
-            ip = vconfig['machines']["#{vm.name}"]["ip"]
-            aliases = [
-                'sss.ccc.sss'
-            ]
-
-            ip
-#            nil
-        end
-
-        config.hostmanager.enabled = true
-        config.hostmanager.manage_host = true
-        config.hostmanager.manage_guest = false
-        config.hostmanager.ignore_private_ip = false
-        config.hostmanager.include_offline = false
-        config.hostmanager.aliases = aliases
-
-
-    end
 end

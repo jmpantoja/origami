@@ -141,12 +141,14 @@ varnish_default_vcl_template_path: "{{origami_dir}}/templates/varnish/default.vl
 varnish_default_backend_host: "127.0.0.1"
 varnish_default_backend_port: "8080"
 
+
+
 # Pimp my Log settings.
-pimpmylog_install_dir: "{{ nginx_root_base_path }}/{{ hostname }}/pimpmylog"
+pimpmylog_install_dir: "{{ deploy_base_path }}/pimpmylog"
 pimpmylog_grant_all_privs: no
 
 # PhpRedmi
-phpredmin_install_dir: "{{ nginx_root_base_path }}/{{ hostname }}/phpredmin"
+phpredmin_install_dir: "{{ deploy_base_path }}/phpredmin"
 
 # XDebug configuration. XDebug is disabled by default for better performance.
 php_xdebug_default_enable: 0
@@ -187,3 +189,5 @@ nginx_package_name: "openresty"
 nginx_error_log: "/var/log/nginx/error.log warn"
 nginx_access_log: "/var/log/nginx/access.log main buffer=16k flush=2m"
 
+deploy_base_path: "{{ nginx_root_base_path }}/{{ hostname }}"
+deploy_current_path: "{{ deploy_base_path }}/current"

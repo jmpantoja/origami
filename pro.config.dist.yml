@@ -30,19 +30,19 @@ machines:
 nginx_vhosts:
   - server_name: "www.{{ hostname }}"
     server_name_redirect: "{{ hostname }}"
-    root: "{{ nginx_root_base_path }}/{{ hostname }}/frontend/public"
+    root: "{{ deploy_base_path }}/frontend/public"
     template: "symfony4.j2"
 
   - server_name: "api.{{ hostname }}"
-    root: "{{ nginx_root_base_path }}/{{ hostname }}/backend/public"
+    root: "{{ deploy_base_path }}/backend/public"
     template: "symfony4.j2"
 
   - server_name: "admin.{{ hostname }}"
-    root: "{{ nginx_root_base_path }}/{{ hostname }}/backend/public"
+    root: "{{ deploy_base_path }}/backend/public"
     template: "symfony4.j2"
 
   - server_name: "logs.{{ hostname }}"
-    root: "{{ nginx_root_base_path }}/{{ hostname }}/pimpmylog"
+    root: "{{ deploy_base_path }}/pimpmylog"
     template: "php-tool.j2"
 
   - server_name: "mail.{{ hostname }}"
@@ -50,7 +50,7 @@ nginx_vhosts:
     proxy_pass_port: 8025
 
   - server_name: "redis.{{ hostname }}"
-    root: "{{ nginx_root_base_path }}/{{ hostname }}/phpredmin/public"
+    root: "{{ deploy_base_path }}/phpredmin/public"
     template: "php-tool.j2"
 
 installed_extras:

@@ -5,12 +5,15 @@ require 'yaml'
 def parse_args(extra)
     args = {};
 
+    args['playbook']='playbook'
     args['env']='dev'
 
     opts = GetoptLong.new(
       [ '--env', GetoptLong::REQUIRED_ARGUMENT ],
       [ '--provision', GetoptLong::NO_ARGUMENT ],
       [ '--force', GetoptLong::NO_ARGUMENT ],
+      [ '--deploy', GetoptLong::NO_ARGUMENT ],
+      [ '--rollback', GetoptLong::NO_ARGUMENT ],
       [ '--tags', GetoptLong::REQUIRED_ARGUMENT ]
     )
 
@@ -20,6 +23,10 @@ def parse_args(extra)
           args['env']=arg
         when '--tags'
           args['tags']=arg
+        when '--deploy'
+          args['playbook']='deploy'
+        when '--rollback'
+          args['playbook']='rollback'
       end
     end
 

@@ -1,4 +1,4 @@
 *.log
 .idea/
-
+.vagrant/
 pro.config.yml
