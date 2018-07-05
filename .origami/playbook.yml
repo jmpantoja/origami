@@ -1,0 +1,86 @@
+---
+- hosts: all
+  become: yes
+
+  pre_tasks:
+    - name: Ensure PHP version -specific workspace directory exists.
+      file:
+        path: "/root/php{{ php_version }}"
+        state: directory
+        mode: 0775
+      tags: ['php', 'xdebug']
+
+
+  roles:
+    # Essential roles.
+    - { role: geerlingguy.repo-remi, when: ansible_os_family == 'RedHat', tags: ['webserver', 'php'] }
+    - { role: geerlingguy.firewall, when: firewall_enabled, tags: ['firewall'] }
+    - { role: geerlingguy.postfix }
+
+    # Database
+    - { role: geerlingguy.mysql, when: db_backend == 'mysql', tags: ['database'] }
+    - { role: geerlingguy.postgresql, when: db_backend == 'pgsql', tags: ['database'] }
+    - { role: geerlingguy.adminer, when: '"adminer" in installed_extras', tags: ['database'] }
+
+    # Webserver
+    - {role: geerlingguy.pip, tags: ['pip', 'webserver', 'openresty']}
+    - { role: geerlingguy.varnish }
+    - { role: openresty, tags: ['webserver', 'openresty'] }
+
+    - {role: certificates, tags: ['webserver', 'openresty']}
+
+    - { role: geerlingguy.php-versions, when: php_version != '', tags: ['php', 'xdebug', 'database'] }
+    - { role: geerlingguy.php, tags: ['php'] }
+    - { role: geerlingguy.php-pecl, tags: ['php'] }
+    - { role: geerlingguy.composer, tags: ['php'] }
+    - { role: geerlingguy.php-mysql, when: db_backend == 'mysql', tags: ['php', 'database'] }
+    - { role: geerlingguy.php-pgsql, when: db_backend == 'pgsql', tags: ['php', 'database'] }
+
+    - role: geerlingguy.php-xdebug
+      workspace: "/root/php{{ php_version }}"
+      when: '"xdebug" in installed_extras'
+      tags: ['php', 'xdebug']
+
+    - role: thom8.php-upload-progress
+      workspace: "/root/php{{ php_version }}"
+      when: '"upload-progress" in installed_extras'
+      tags: ['php']
+
+    - { role: geerlingguy.blackfire }
+    - { role: geerlingguy.adminer, when: '"adminer" in installed_extras', tags: ['database'] }
+    - { role: pimpmylog, when: '"pimpmylog" in installed_extras', tags: ['logs'] }
+    - { role: geerlingguy.daemonize, when: '"mailhog" in installed_extras' }
+    - { role: geerlingguy.mailhog, when: '"mailhog" in installed_extras' }
+    - { role: phpredmin, when: '"phpredmin" in installed_extras', tags: ['phpredmin'] }
+
+    - { role: geerlingguy.nodejs }
+
+    - { role: geerlingguy.redis }
+    - { role: geerlingguy.php-redis, tags: ['php'] }
+    - { role: geerlingguy.ruby, when: '"ruby" in installed_extras' }
+
+    - role: geerlingguy.java
+      when: >
+        "java" in installed_extras or
+        "solr" in installed_extras or
+        "selenium" in installed_extras or
+        "elasticsearch" in installed_extras
+
+    - { role: arknoll.selenium, when: '"selenium" in installed_extras' }
+    - { role: geerlingguy.solr, when: '"solr" in installed_extras' }
+    - { role: geerlingguy.elasticsearch, when: '"elasticsearch" in installed_extras' }
+
+
+    # Roles for security and stability on production.
+    - { role: geerlingguy.security, when: extra_security_enabled }
+
+  tasks:
+    - name: levantar todos los servicios
+      service:
+        name: "{{ item }}"
+        state: restarted
+      with_items:
+        - "php{{ php_version }}-fpm"
+        - "{{ db_backend }}"
+        - "{{ php_webserver_daemon }}"
+        - varnish

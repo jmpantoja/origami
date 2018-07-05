@@ -1,0 +1,35 @@
+---
+- hosts: proxy
+  become: yes
+
+  pre_tasks:
+    - name: Ensure PHP version -specific workspace directory exists.
+      file:
+        path: "/root/php{{ php_version }}"
+        state: directory
+        mode: 0775
+      tags: ['php', 'xdebug']
+
+
+  roles:
+    # Essential roles.
+    - { role: geerlingguy.repo-remi, when: ansible_os_family == 'RedHat', tags: ['webserver', 'php'] }
+    - { role: geerlingguy.firewall, when: firewall_enabled }
+    - { role: geerlingguy.postfix }
+
+    - role: openresty
+      tags: ['webserver']
+      vars:
+        force_vhost_template: proxy.j2
+        force_vhost_sufix: proxy
+
+
+    - {role: geerlingguy.pip, tags: ['pip']}
+
+    - {role: certificates, tags: ['webserver']}
+
+
+    # Roles for security and stability on production.
+    - { role: geerlingguy.security, when: extra_security_enabled }
+
+

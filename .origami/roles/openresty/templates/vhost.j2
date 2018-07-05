@@ -1,0 +1,64 @@
+server {
+    listen       80;
+    server_name  {{ server_name }} {{ server_name_redirect }};
+    return       301 https://{{ server_name }}$request_uri;
+}
+
+server {
+        listen 443 ssl http2;
+        listen [::]:443 ssl http2;
+
+        ssl_certificate      /etc/letsencrypt/live/{{ server_name }}/fullchain.pem;
+        ssl_certificate_key  /etc/letsencrypt/live/{{ server_name }}/privkey.pem;
+
+        include snippets/ssl-params.conf;
+
+        server_name {{ server_name }} {{ server_name_redirect }};
+
+        location / {
+            proxy_pass http://127.0.0.1:{{ varnish_listen_port }};
+            proxy_set_header X-Real-IP  $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto https;
+            proxy_set_header X-Forwarded-Port 443;
+            proxy_set_header Host $host;
+        }
+}
+
+server {
+    {% block server_begin %}{% endblock %}
+
+    {% block server_basic -%}
+
+    listen       {{ item.listen | default('8080') }};
+
+{% if item.server_name is defined %}
+    server_name {{ item.server_name }};
+{% endif %}
+
+{% if item.root is defined %}
+    root {{ item.root }};
+{% endif %}
+
+    index {{ index }};
+
+{% if item.error_page is defined %}
+    error_page {{ item.error_page }};
+{% endif %}
+
+    access_log {{ access_log }};
+    error_log {{ error_log }} error;
+
+{% if item.return is defined %}
+    return {{ item.return }};
+{% endif %}
+
+    {% endblock %}
+
+{% block server_end %}{% endblock %}
+{% block locations %}{% endblock %}
+
+{% if item.extra_parameters is defined %}
+{{ item.extra_parameters|indent(4) }}
+{% endif %}
+}

@@ -1,0 +1,10 @@
+{% extends "vhost.j2" %}
+
+{% block locations %}
+    location ~ \.php(/|$) {
+
+        include snippets/fpm.conf;
+        include snippets/acl.conf;
+    }
+
+{% endblock %}

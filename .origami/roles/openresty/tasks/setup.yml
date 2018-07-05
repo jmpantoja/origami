@@ -1,0 +1,36 @@
+---
+- name: WEB | Configure OpenResty PGP
+  apt_key:
+    url: https://openresty.org/package/pubkey.gpg
+
+- name: WEB | Add OpenResty Repository
+  apt_repository:
+    repo: "deb http://openresty.org/package/ubuntu {{ ansible_distribution_release }} main"
+    state: present
+
+- name: WEB | Install OpenResty
+  apt:
+    name: "{{ item }}"
+    update_cache: true
+    state: present
+  with_items:
+    - 'openresty'
+#    - 'openresty-resty'
+
+
+# Nginx setup.
+- name: WEB | Copy nginx configuration in place.
+  template:
+    src: "{{ nginx_conf_template }}"
+    dest: "{{ nginx_conf_file_path }}"
+    owner: root
+    group: "{{ root_group }}"
+    mode: 0644
+  notify:
+    - reload nginx
+
+- name: Ensure nginx_root_base_path exists.
+  file:
+    path: "{{ nginx_root_base_path }}"
+    state: directory
+  notify: reload nginx

@@ -1,0 +1,36 @@
+
+# Improve HTTPS performance with session resumption
+ssl_session_cache shared:SSL:10m;
+ssl_session_timeout 5m;
+ssl_ecdh_curve secp384r1;
+ssl_session_tickets off;
+
+
+# Enable server-side protection against BEAST attacks
+ssl_prefer_server_ciphers on;
+ssl_ciphers ECDH+AESGCM:ECDH+AES256:ECDH+AES128:DH+3DES:!ADH:!AECDH:!MD5;
+
+# Disable SSLv3
+ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+
+# Diffie-Hellman parameter for DHE ciphersuites
+# $ sudo openssl dhparam -out /etc/ssl/certs/dhparam.pem 4096  (4096 tarda mucho, mejor 2048)
+ssl_dhparam /etc/ssl/certs/dhparam.pem;
+
+# Enable HSTS (https://developer.mozilla.org/en-US/docs/Security/HTTP_Strict_Transport_Security)
+
+#add_header Strict-Transport-Security "max-age=63072000; includeSubdomains";
+
+# Enable OCSP stapling (http://blog.mozilla.org/security/2013/07/29/ocsp-stapling-in-firefox)
+ssl_stapling on;
+ssl_stapling_verify on;
+resolver 8.8.8.8 8.8.4.4 valid=300s;
+
+resolver_timeout 5s;
+
+# Security headers
+add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload";
+add_header X-Frame-Options DENY;
+add_header X-Content-Type-Options nosniff;
+
+

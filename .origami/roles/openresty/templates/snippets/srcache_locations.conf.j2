@@ -1,0 +1,92 @@
+
+    # Guarda la response en cache
+    # Redis DataBase 0. Key: url, Value: response
+    # Redis DataBase 1. Para cada tag, en el header X-Cache-Tags (separado por comas)
+    # List Name: tag, Entry: url
+    location /__store {
+        internal;
+
+        set_unescape_uri $key $arg_key ;
+
+        content_by_lua_block  {
+                local redis = require "resty.redis"
+                red = redis:new();
+                local ok, err = red:connect("127.0.0.1", 6379)
+
+                if ok then
+                        local tags = string.match(ngx.var.echo_request_body, 'X%-Cache%-Tags: ([^\n|^\r]+)');
+                        if tags then
+                                red:select(1);
+                                for tag in string.gmatch(tags..",", '([^,]*),') do
+                                        red:sadd(tag, ngx.var.key);
+                                        red:persist(tag);
+                                end
+                        end
+                end
+
+                local persist = string.match(ngx.var.echo_request_body, 'X%-Cache%-Persist: ([^\n|^\r]+)');
+                red:select(0);
+                red:set(ngx.var.key, ngx.var.echo_request_body);
+
+                if persist then
+                    red:persist(ngx.var.key);
+                else
+                    red:expire(ngx.var.key, ngx.var.arg_expire);
+                end
+        }
+
+    }
+
+    # Busca la url en cache
+    location /__fetch {
+        internal;
+        set  $redis_key $args;
+        redis_pass  127.0.0.1:6379;
+    }
+
+    # Purge
+    location ~ /__purge {
+
+        auth_basic           "solicitud de credinciales";
+        auth_basic_user_file snippets/htpasswd.conf;
+
+        default_type "application/json";
+
+        content_by_lua_block {
+                local redis = require "resty.redis"
+                local cjson = require "cjson"
+
+                red = redis:new();
+                local ok, err = red:connect("127.0.0.1", 6379)
+
+                local arr = {};
+
+
+                if ok then
+                    red:select(1);
+                    if ngx.var.query_string then
+                            local index = 0;
+                            for tag in string.gmatch(ngx.var.query_string..",", '([^,]*),') do
+                                    index = index +1;
+                                    arr[index] = {};
+                                    arr[index]['tag'] = tag;
+                                    arr[index]['deleted'] = {};
+                                    local members = red:smembers(tag);
+                                    red:del(tag);
+
+                                    ngx.status = 200;
+
+                                    for key, value in pairs(members) do
+                                            arr[index]['deleted'][key]= value;
+                                            red:select(0);
+                                            red:del(value);
+                                    end
+
+                            end
+                    end
+                end
+
+                ngx.say(cjson.encode(arr));
+        }
+
+    }

@@ -1,0 +1,17 @@
+---
+  - name:  Create access log config file
+    template:
+      src: access_log.j2
+      dest: "{{ pimpmylog_install_dir }}/config.user.d/{{ server_name }}-access.json"
+      owner: "{{ nginx_user }}"
+      group: "{{ nginx_user }}"
+      mode: 0644
+
+  - name:  Create errror log config file
+    template:
+      src: error_log.j2
+      dest: "{{ pimpmylog_install_dir }}/config.user.d/{{ server_name }}-error.json"
+      owner: "{{ nginx_user }}"
+      group: "{{ nginx_user }}"
+      mode: 0644
+

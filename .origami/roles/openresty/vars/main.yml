@@ -1,0 +1,14 @@
+---
+root_group: root
+nginx_conf_path: /etc/openresty/conf.d
+nginx_conf_file_path: /etc/openresty/nginx.conf
+nginx_mime_file_path: /etc/openresty/mime.types
+nginx_pidfile: logs/nginx.pid
+nginx_vhost_path: /etc/openresty/sites-enabled
+nginx_default_vhost_path: /etc/openresty/sites-enabled/default
+nginx_user: "www-data"
+
+nginx_snippets_path: /etc/openresty/snippets
+
+nginx_ssl_conf_file_path: "{{nginx_snippets_path}}/ssl-params.conf"
+nginx_ssl_conf_template: "ssl-params.conf.j2"

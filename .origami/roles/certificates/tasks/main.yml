@@ -1,0 +1,13 @@
+---
+- include_tasks: certificate.yml
+  vars:
+    server_name: "{{ item.server_name.split(' ')[0] }}"
+    server_name_redirect: "{{ item.server_name_redirect | default('') }}"
+  with_items: "{{ nginx_vhosts }}"
+  notify:
+    - restart varnish
+    - restart webserver
+
+
+
+

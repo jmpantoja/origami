@@ -1,0 +1,35 @@
+---
+- name: Install latest passlib with pip
+  pip: name=passlib
+
+# Add a user to a password file and ensure permissions are set
+- htpasswd:
+    path: "{{ nginx_snippets_path }}/htpasswd.conf"
+    name: "{{ app_admin_user }}"
+    password: "{{ app_admin_password }}"
+    owner: root
+    group: www-data
+    mode: 0640
+
+- name: Ensure snippets dir exists
+  file:
+    path: "{{ nginx_snippets_path }}"
+    state: directory
+    owner: "{{ nginx_user }}"
+    mode: 0755
+
+- name: Copy snippets config files.
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ nginx_snippets_path }}/{{ item.dest }}"
+    owner: root
+    group: "{{ root_group }}"
+    mode: 0644
+  with_items:
+    - {src: "snippets/ssl-params.conf.j2", dest: "ssl-params.conf"}
+    - {src: "snippets/srcache_locations.conf.j2", dest: "srcache_locations.conf"}
+    - {src: "snippets/srcache.conf.j2", dest: "srcache.conf"}
+    - {src: "snippets/fpm.conf.j2", dest: "fpm.conf"}
+    - {src: "snippets/acl.conf.j2", dest: "acl.conf"}
+
+

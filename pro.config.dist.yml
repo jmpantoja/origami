@@ -1,0 +1,66 @@
+---
+hostname: origami.pre
+
+# database
+db_backend: mysql
+db_name: origami
+db_user: origami
+db_password: origami
+
+app_admin_user: admin
+app_admin_password: admin
+
+firewall_allowed_tcp_ports:
+  - "22"
+  - "25"
+  - "2200"
+  - "80"
+  - "443"
+
+machines:
+  production:
+    provider: "digital_ocean"
+    token: "<digital oceaan personal token>"
+    image: "ubuntu-16-04-x64"
+    region: "lon1"
+    private_key_path: "~/.ssh/id_rsa"
+    size: "1024mb"
+    frontend: true
+
+nginx_vhosts:
+  - server_name: "www.{{ hostname }}"
+    server_name_redirect: "{{ hostname }}"
+    root: "{{ nginx_root_base_path }}/{{ hostname }}/frontend/public"
+    template: "symfony4.j2"
+
+  - server_name: "api.{{ hostname }}"
+    root: "{{ nginx_root_base_path }}/{{ hostname }}/backend/public"
+    template: "symfony4.j2"
+
+  - server_name: "admin.{{ hostname }}"
+    root: "{{ nginx_root_base_path }}/{{ hostname }}/backend/public"
+    template: "symfony4.j2"
+
+  - server_name: "logs.{{ hostname }}"
+    root: "{{ nginx_root_base_path }}/{{ hostname }}/pimpmylog"
+    template: "php-tool.j2"
+
+  - server_name: "mail.{{ hostname }}"
+    template: "proxy.j2"
+    proxy_pass_port: 8025
+
+  - server_name: "redis.{{ hostname }}"
+    root: "{{ nginx_root_base_path }}/{{ hostname }}/phpredmin/public"
+    template: "php-tool.j2"
+
+installed_extras:
+  - mailhog
+  - phpredmin
+  - pimpmylog
+#  - xdebug
+# - elasticsearch
+# - java
+# - memcached
+# - ruby
+# - selenium
+# - solr

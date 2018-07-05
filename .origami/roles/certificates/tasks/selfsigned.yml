@@ -1,0 +1,33 @@
+---
+- name: Ensure python OpenSSL dependencies are installed.
+  pip:
+    name: "{{ item }}"
+    state: latest
+    extra_args: --upgrade
+  with_items:
+    - pip
+    - pyOpenSSL
+
+- name: Ensure directory exists for local self-signed TLS certs.
+  file:
+    path: "/etc/letsencrypt/live/{{ server_name }}"
+    state: directory
+
+- name: Generate an OpenSSL private key.
+  openssl_privatekey:
+    path: "/etc/letsencrypt/live/{{ server_name }}/privkey.pem"
+
+- name: Generate an OpenSSL CSR.
+  openssl_csr:
+    path: "/etc/ssl/private/{{ server_name }}.csr"
+    privatekey_path: "/etc/letsencrypt/live/{{ server_name }}/privkey.pem"
+    common_name: "{{ server_name }}"
+
+- name: Generate a Self Signed OpenSSL certificate.
+  openssl_certificate:
+    path: "/etc/letsencrypt/live/{{ server_name }}/fullchain.pem"
+    privatekey_path: "/etc/letsencrypt/live/{{ server_name }}/privkey.pem"
+    csr_path: "/etc/ssl/private/{{ server_name }}.csr"
+    provider: selfsigned
+
+

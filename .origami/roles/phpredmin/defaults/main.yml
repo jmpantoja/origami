@@ -1,0 +1,5 @@
+---
+phpredmin_install_dir: /var/www/phpredmin
+phpredmin_repo: https://github.com/sasanrose/phpredmin.git
+phpredmin_version: v1.2.3
+

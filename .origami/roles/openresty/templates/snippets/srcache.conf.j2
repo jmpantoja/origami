@@ -1,0 +1,11 @@
+        set $skip 0;
+        set $key "$scheme://$host$request_uri";
+        set_escape_uri $escaped_key $key;
+
+        srcache_fetch_skip $skip;
+        srcache_store_skip $skip;
+
+        srcache_fetch GET /__fetch $key;
+        srcache_store PUT /__store key=$escaped_key&expire=$srcache_expire;
+
+        more_set_headers 'X-Cache $srcache_fetch_status';

@@ -1,0 +1,23 @@
+---
+# comprobamos si estamos en producion
+- name: resolve some hostname
+  command: "dig +short {{ server_name }}"
+  register: "temp"
+
+- set_fact:
+    resolved: "{{ temp.stdout | ipaddr('public') | default('private', true) }}"
+
+# Certificados (local)
+- include_tasks: selfsigned.yml
+  when:
+    - resolved  == "private"
+
+# Certificados (production)
+- include_tasks: letsencrypt.yml
+  when:
+    - resolved != "private"
+
+- name: Generate OpenSSL Diffie-Hellman Parameters
+  openssl_dhparam:
+    path: /etc/ssl/certs/dhparam.pem
+    size: "{{ dhparam_size | default(2048) }}"

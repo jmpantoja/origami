@@ -1,0 +1,25 @@
+---
+  - name:  Create config.user file
+    template:
+      src: config.user.php.j2
+      dest: "{{ pimpmylog_install_dir }}/config.user.php"
+      owner: "{{ nginx_user }}"
+      group: "{{ nginx_user }}"
+      mode: 0644
+
+  - name:  Ensure custom config dir exists
+    file:
+      path: "{{ pimpmylog_install_dir }}/config.user.d"
+      owner: "{{ nginx_user }}"
+      group: "{{ nginx_user }}"
+      state: directory
+
+  - name:  Create file configuration
+    include_tasks: log_file.yml
+    vars:
+      server_name: "{{ item.server_name.split(' ')[0] }}"
+      error_log: "{{ item.error_log | default('/var/log/nginx/' ~ server_name ~ '/error.log') }}"
+      access_log: "{{ item.access_log | default('/var/log/nginx/' ~ server_name ~ '/access.log') }}"
+    with_items: "{{ nginx_vhosts }}"
+
+

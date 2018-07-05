@@ -1,0 +1,23 @@
+---
+- hosts: database
+  become: yes
+
+  roles:
+    # Essential roles.
+    - { role: geerlingguy.repo-remi, when: ansible_os_family == 'RedHat', tags: ['webserver', 'php'] }
+    - { role: geerlingguy.firewall, when: firewall_enabled }
+    - { role: geerlingguy.git }
+    - { role: geerlingguy.postfix }
+
+
+    - { role: geerlingguy.postfix }
+
+    - { role: geerlingguy.mysql, when: db_backend == 'mysql', tags: ['database'] }
+    - { role: geerlingguy.postgresql, when: db_backend == 'pgsql', tags: ['database'] }
+
+    - { role: geerlingguy.adminer, when: '"adminer" in installed_extras', tags: ['database'] }
+
+    # Roles for security and stability on production.
+    - { role: geerlingguy.security, when: extra_security_enabled }
+
+

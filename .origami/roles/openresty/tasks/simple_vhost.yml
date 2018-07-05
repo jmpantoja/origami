@@ -1,0 +1,31 @@
+---
+- name: Create a vhost file.
+  template:
+    src: "{{ template }}"
+    dest: "{{ nginx_vhost_path }}/{{ server_name }}.{{ sufix}}"
+    force: yes
+    owner: root
+    group: root
+    mode: 0644
+  vars:
+    index: "{{ item.index | default('index.php') }}"
+    error_log: "{{ item.error_log | default('/var/log/nginx/' ~ server_name ~ '/error.log') }}"
+    access_log: "{{ item.access_log | default('/var/log/nginx/' ~ server_name ~ '/access.log') }}"
+    varnish_listen_port: "{{ varnish_listen_port | default(6081) }}"
+#    proxy_pass_port: "{{ item.proxy_pass_port | default(8080) }}"
+
+
+- name: Ensure nginx_error_log_path exists.
+  file:
+    path: "{{ item.error_log | default('/var/log/nginx/' ~ server_name ~ '/log.error') | dirname }}"
+    state: directory
+
+  notify: reload nginx
+
+- name: Ensure nginx_access_log_path exists.
+  file:
+    path: "{{ item.access_log | default('/var/log/nginx/' ~ server_name ~ '/log.access') | dirname }}"
+    state: directory
+
+  with_items: "{{ nginx_vhosts }}"
+  notify: reload nginx

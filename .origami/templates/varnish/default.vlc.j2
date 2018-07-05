@@ -1,0 +1,190 @@
+#
+# This is an example VCL file for Varnish.
+#
+# It does not do anything by default, delegating control to the
+# builtin VCL. The builtin VCL is called when there is no explicit
+# return statement.
+#
+# See the VCL chapters in the Users Guide at https://www.varnish-cache.org/docs/
+# and http://varnish-cache.org/trac/wiki/VCLExamples for more examples.
+
+# Update of varnish 4 to work with wordpress
+# Marker to tell the VCL compiler that this VCL has been adapted to the
+# new 4.0 format.
+vcl 4.0;
+
+# Default backend definition. Set this to point to your content server.
+backend default {
+    .host = "{{ varnish_default_backend_host }}";
+    .port = "{{ varnish_default_backend_port }}";
+    .connect_timeout = 600s;
+    .first_byte_timeout = 600s;
+    .between_bytes_timeout = 600s;
+    .max_connections = 800;
+}
+
+# This function is used when a request is send by a HTTP client (Browser)
+sub vcl_recv {
+        unset req.http.Forwarded;
+
+	# Normalize the header, remove the port (in case you're testing this on various TCP ports)
+	set req.http.Host = regsub(req.http.Host, ":[0-9]+", "");
+
+	# Remove has_js and CloudFlare/Google Analytics __* cookies.
+	set req.http.Cookie = regsuball(req.http.Cookie, "(^|;\s*)(_[_a-z]+|has_js)=[^;]*", "");
+	# Remove a ";" prefix, if present.
+	set req.http.Cookie = regsub(req.http.Cookie, "^;\s*", "");
+
+	# Post requests will not be cached
+	if (req.http.Authorization || req.method == "POST") {
+		return (pass);
+	}
+
+        # Purge requests will be passed
+        if (req.method == "PURGE") {
+                return (pass);
+        }
+
+        # Did not cache the admin and async pages
+        if (req.url ~ "(login|async|admin)" || req.url ~ "preview=true") {
+                return (pass);
+        }
+
+	# Remove the "has_js" cookie
+	set req.http.Cookie = regsuball(req.http.Cookie, "has_js=[^;]+(; )?", "");
+
+	# Remove any Google Analytics based cookies
+	set req.http.Cookie = regsuball(req.http.Cookie, "__utm.=[^;]+(; )?", "");
+
+	# Remove the Quant Capital cookies (added by some plugin, all __qca)
+	set req.http.Cookie = regsuball(req.http.Cookie, "__qc.=[^;]+(; )?", "");
+
+
+	# Are there cookies left with only spaces or that are empty?
+	if (req.http.cookie ~ "^ *$") {
+		    unset req.http.cookie;
+	}
+
+	# Cache the following files extensions
+	if (req.url ~ "\.(css|js|png|gif|jp(e)?g|swf|ico)") {
+		unset req.http.cookie;
+	}
+
+	# Normalize Accept-Encoding header and compression
+	# https://www.varnish-cache.org/docs/3.0/tutorial/vary.html
+	if (req.http.Accept-Encoding) {
+		# Do no compress compressed files...
+		if (req.url ~ "\.(jpg|png|gif|gz|tgz|bz2|tbz|mp3|ogg)$") {
+			unset req.http.Accept-Encoding;
+		} elsif (req.http.Accept-Encoding ~ "gzip") {
+		    	set req.http.Accept-Encoding = "gzip";
+		} elsif (req.http.Accept-Encoding ~ "deflate") {
+		    	set req.http.Accept-Encoding = "deflate";
+		} else {
+			unset req.http.Accept-Encoding;
+		}
+	}
+
+	if (!req.http.cookie) {
+		unset req.http.cookie;
+	}
+
+
+	# Did not cache HTTP authentication and HTTP Cookie
+	if (req.http.Authorization || req.http.Cookie) {
+		# Not cacheable by default
+		return (pass);
+	}
+
+
+	set req.http.Surrogate-Capability = "abc=ESI/1.0";
+
+	# Cache all others requests
+	return (hash);
+}
+
+sub vcl_pipe {
+	return (pipe);
+}
+
+sub vcl_pass {
+	return (fetch);
+}
+
+# The data on which the hashing will take place
+sub vcl_hash {
+ 	hash_data(req.url);
+ 	if (req.http.host) {
+     	hash_data(req.http.host);
+ 	} else {
+     	hash_data(server.ip);
+ 	}
+
+	# If the client supports compression, keep that in a different cache
+    	if (req.http.Accept-Encoding) {
+        	hash_data(req.http.Accept-Encoding);
+	}
+
+	return (lookup);
+}
+
+# This function is used when a request is sent by our backend (Nginx server)
+sub vcl_backend_response {
+	# Remove some headers we never want to see
+	unset beresp.http.Server;
+	unset beresp.http.X-Powered-By;
+
+
+	# For static content strip all backend cookies
+	if (bereq.url ~ "\.(css|js|png|gif|jp(e?)g)|swf|ico") {
+		unset beresp.http.cookie;
+	}
+
+	# only cache status ok
+	if ( beresp.status != 200 ) {
+		set beresp.uncacheable = true;
+                return (deliver);
+	}
+
+	# A TTL of 2h
+	set beresp.ttl = 0s;
+	# Define the default grace period to serve cached content
+	#set beresp.grace = 30s;
+
+    	if (beresp.http.Surrogate-Control ~ "ESI/1.0") {
+        	unset beresp.http.Surrogate-Control;
+	        set beresp.do_esi = true;
+    	}
+
+	return (deliver);
+}
+
+# The routine when we deliver the HTTP request to the user
+# Last chance to modify headers that are sent to the client
+sub vcl_deliver {
+
+	# Remove some headers: PHP version
+	unset resp.http.X-Powered-By;
+
+	# Remove some headers: Apache version & OS
+	unset resp.http.Server;
+
+	# Remove some heanders: Varnish
+	unset resp.http.Via;
+	unset resp.http.X-Varnish;
+
+    # Remove some heanders: Cache-Tags
+	unset resp.http.X-Cache-Tags;
+	unset resp.http.X-Cache-Persist;
+
+	return (deliver);
+}
+
+sub vcl_init {
+ 	return (ok);
+}
+
+sub vcl_fini {
+ 	return (ok);
+}
+

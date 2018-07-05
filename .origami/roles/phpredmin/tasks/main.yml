@@ -1,0 +1,31 @@
+---
+- name: Clone PhpRedmin
+  git:
+    dest: "{{ phpredmin_install_dir }}"
+    repo: "{{ phpredmin_repo }}"
+    version: "{{ phpredmin_version }}"
+    accept_hostkey: yes
+    force: true
+
+- name: Grant  privileges on logs Log directory.
+  file:
+    path: "{{ phpredmin_install_dir }}/logs"
+    state: directory
+    mode: 0777
+
+- name: Fix Post request bug
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ phpredmin_install_dir }}/{{ item.dest }}"
+  with_items:
+    - {src: "strings.php.j2", dest: "controllers/strings.php"}
+    - {src: "inputs.php.j2", dest: "libraries/inputs.php"}
+
+
+- name: Config
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ phpredmin_install_dir }}/{{ item.dest }}"
+  with_items:
+    - {src: "config.dist.php.j2", dest: "/config.dist.php"}
+    - {src: "index.php.j2", dest: "/public/index.php"}
