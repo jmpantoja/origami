@@ -1,0 +1,9 @@
+---
+- name: Rollback example app to my-server.com
+  hosts: all
+  become: yes
+
+  roles:
+    - role: carlosbuenosvinos.ansistrano-rollback
+      vars:
+          ansistrano_deploy_to: "{{ deploy_base_path }}"

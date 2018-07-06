@@ -1,5 +1,5 @@
 ---
-hostname: origami2.local
+hostname: origami.local
 
 # database
 db_backend: mysql
@@ -21,7 +21,7 @@ firewall_allowed_tcp_ports:
 
 machines:
   dev01:
-    frontend: true
+    frontend: true    # true indica que en esta máquina estaran abiertos los puertos 80 y 443s
     provider: "{{ vagrant_provider }}"
     box: "{{ vagrant_box }}"
     ip: "192.168.10.10"
