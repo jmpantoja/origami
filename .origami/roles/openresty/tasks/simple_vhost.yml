@@ -12,6 +12,7 @@
     error_log: "{{ item.error_log | default('/var/log/nginx/' ~ server_name ~ '/error.log') }}"
     access_log: "{{ item.access_log | default('/var/log/nginx/' ~ server_name ~ '/access.log') }}"
     varnish_listen_port: "{{ varnish_listen_port | default(6081) }}"
+    backend_port: "{{ item.backend_port | default(varnish_listen_port | default( 6081))}}"
 #    proxy_pass_port: "{{ item.proxy_pass_port | default(8080) }}"
 
 

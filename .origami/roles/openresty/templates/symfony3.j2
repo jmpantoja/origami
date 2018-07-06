@@ -1,0 +1,44 @@
+{% extends "vhost.j2" %}
+
+{% block locations %}
+
+    location / {
+        # try to serve file directly, fallback to app.php
+        try_files $uri /app.php$is_args$args;
+    }
+    # DEV
+    # This rule should only be placed on your development environment
+    # In production, don't include this and don't deploy app_dev.php or config.php
+    location ~ ^/(app_dev|config)\.php(/|$) {
+        include snippets/fpm.conf;
+
+        # optionally set the value of the environment variables used in the application
+         fastcgi_param APP_ENV "{{ env }}";
+        # fastcgi_param APP_SECRET <app-secret-id>;
+        # fastcgi_param DATABASE_URL "mysql://db_user:db_pass@host:3306/db_name";
+    }
+    # PROD
+    location ~ ^/app\.php(/|$) {
+        include snippets/srcache.conf;
+        include snippets/fpm.conf;
+
+        # optionally set the value of the environment variables used in the application
+         fastcgi_param APP_ENV "{{ env }}";
+        # fastcgi_param APP_SECRET <app-secret-id>;
+        # fastcgi_param DATABASE_URL "mysql://db_user:db_pass@host:3306/db_name";
+
+        # Prevents URIs that include the front controller. This will 404:
+        # http://domain.tld/index.php/some-path
+        # Remove the internal directive to allow URIs like this
+        internal;
+   }
+
+   # return 404 for all other php files not matching the front controller
+   # this prevents access to other php files you don't want to be accessible.
+   location ~ \.php$ {
+     return 404;
+   }
+
+    include snippets/srcache_locations.conf;
+
+{% endblock %}

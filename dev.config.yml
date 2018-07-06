@@ -1,5 +1,5 @@
 ---
-hostname: origami.local
+hostname: origami2.local
 
 # database
 db_backend: mysql
@@ -57,7 +57,8 @@ nginx_vhosts:
 
   - server_name: "mail.{{ hostname }}"
     template: "proxy.j2"
-    proxy_pass_port: 8025
+    root: "/opt/mailhog"
+    backend_port: 8025
 
   - server_name: "redis.{{ hostname }}"
     root: "{{ deploy_base_path }}/phpredmin/public"

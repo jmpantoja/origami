@@ -11,6 +11,7 @@ def parse_args(extra)
     opts = GetoptLong.new(
       [ '--env', GetoptLong::REQUIRED_ARGUMENT ],
       [ '--provision', GetoptLong::NO_ARGUMENT ],
+      [ '--no-provision', GetoptLong::NO_ARGUMENT ],
       [ '--force', GetoptLong::NO_ARGUMENT ],
       [ '--deploy', GetoptLong::NO_ARGUMENT ],
       [ '--rollback', GetoptLong::NO_ARGUMENT ],

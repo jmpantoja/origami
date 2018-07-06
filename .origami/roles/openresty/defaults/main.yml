@@ -12,7 +12,7 @@ nginx_ppa_version: stable
 # The name of the nginx package to install.
 nginx_package_name: "openresty"
 
-nginx_conf_template: "nginx.conf.j2"
+nginx_conf_template: "config/nginx.conf.j2"
 nginx_vhost_template: "vhost.j2"
 
 nginx_worker_processes: "{{ ansible_processor_vcpus | default(ansible_processor_count) }}"
